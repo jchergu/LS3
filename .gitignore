@@ -1,0 +1,93 @@
+# -----------------------------
+# Python
+# -----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.pkl
+*.pickle
+
+# Virtual environments
+venv/
+.env/
+.env.bak/
+*.env
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# -----------------------------
+# Jupyter
+# -----------------------------
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# -----------------------------
+# Data (don’t upload raw datasets)
+# -----------------------------
+data/raw/
+data/processed/
+data/*.csv
+data/*.json
+data/*.txt
+
+# If you want to track processed small files, remove these lines.
+
+# -----------------------------
+# Models / embeddings
+# -----------------------------
+models/
+*.bin
+*.pt
+*.pth
+*.h5
+*.onnx
+
+# Large embedding dumps
+embeddings/
+*.npy
+*.npz
+
+# Vector DB indexes (FAISS, Chroma, etc.)
+index/
+*.faiss
+*.index
+*.db
+*.sqlite
+
+# -----------------------------
+# Logs / temp / cache
+# -----------------------------
+logs/
+tmp/
+temp/
+.cache/
+*.log
+*.tmp
+
+# Sentence-transformers cache
+/home/*/.cache/torch/
+.cache/torch/
+.cache/huggingface/
+
+# -----------------------------
+# IDEs / Editors
+# -----------------------------
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# -----------------------------
+# OS junk
+# -----------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
