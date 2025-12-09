@@ -10,8 +10,8 @@ Walking through the night with no one by my side
 """
 
 lyric_2 = """
-I wander all alone, emptiness inside
-Another night with nobody near me
+I have nobody with me, my head is confused
+I can't sleep, so I'll go out with myself
 """
 
 # Embed them

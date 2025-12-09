@@ -30,11 +30,7 @@ dist/
 # -----------------------------
 # Data (don’t upload raw datasets)
 # -----------------------------
-data/raw/
-data/processed/
-data/*.csv
-data/*.json
-data/*.txt
+data/
 
 # If you want to track processed small files, remove these lines.
 
