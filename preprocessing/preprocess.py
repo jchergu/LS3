@@ -104,7 +104,7 @@ def run_preprocessing():
         shorten_lyrics(
             input_path="data/processed/lyrics_normalized.csv",
             output_path="data/processed/lyrics_final.csv",
-            max_chars=5000,
+            max_chars=1500,
             lyrics_col="lyrics"
         )
 
