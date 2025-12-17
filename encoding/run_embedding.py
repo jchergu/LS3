@@ -3,7 +3,6 @@
 from encoding.config import (
     STATE_PATH,
     EMBEDDINGS_PATH,
-    METADATA_PATH,
     ID_COLUMN,
     TEXT_COLUMN,
     LOG_EVERY_N_BATCHES,
@@ -11,30 +10,36 @@ from encoding.config import (
 
 from encoding.embedder import Embedder
 from encoding.state import EmbeddingState
-from encoding.writer import EmbeddingWriter
+from encoding.writer import ChunkedEmbeddingWriter
 from encoding.dataset_reader import read_dataset
 
 import numpy as np
+
+
+CHUNK_SIZE = 2048
 
 
 def main():
     print("[encoding] Starting embedding job")
 
     state = EmbeddingState(STATE_PATH)
-    start_row = state.load_last_index()
-    print(f"[encoding] Resuming from row: {start_row}")
+    start_row, chunk_index = state.load()
+    print(f"[encoding] Resuming from row {start_row}, chunk {chunk_index}")
 
     embedder = Embedder()
 
-    # we need embedding dimension once
+    # determine embedding dimension once
     dummy_vec = embedder.embed(["dummy"])
     embedding_dim = dummy_vec.shape[1]
 
-    writer = EmbeddingWriter(
-        embeddings_path=EMBEDDINGS_PATH,
-        metadata_path=METADATA_PATH,
+    writer = ChunkedEmbeddingWriter(
+        base_dir=EMBEDDINGS_PATH,
+        chunk_size=CHUNK_SIZE,
         embedding_dim=embedding_dim,
     )
+
+    embeddings_buffer = []
+    metadata_buffer = []
 
     total_processed = start_row
     batch_count = 0
@@ -46,21 +51,45 @@ def main():
         texts = [r[TEXT_COLUMN] for r in records]
         metadata = [{k: v for k, v in r.items() if k != TEXT_COLUMN} for r in records]
 
-        # embed
         embeddings = embedder.embed(texts)
 
-        # write
-        writer.append_embeddings(embeddings)
-        writer.append_metadata(metadata)
+        embeddings_buffer.append(embeddings)
+        metadata_buffer.extend(metadata)
 
-        # state
         total_processed += len(records)
-        state.save_last_index(total_processed)
-
         batch_count += 1
+
+        # flush chunk
+        buffered_rows = sum(e.shape[0] for e in embeddings_buffer)
+        if buffered_rows >= CHUNK_SIZE:
+            chunk_embeddings = np.vstack(embeddings_buffer)
+
+            writer.write_chunk(
+                chunk_index=chunk_index,
+                embeddings=chunk_embeddings,
+                metadata_rows=metadata_buffer,
+            )
+
+            chunk_index += 1
+            state.save(total_processed, chunk_index)
+
+            embeddings_buffer.clear()
+            metadata_buffer.clear()
 
         if batch_count % LOG_EVERY_N_BATCHES == 0:
             print(f"[encoding] Processed {total_processed} rows")
+
+    # flush remaining buffers
+    if embeddings_buffer:
+        chunk_embeddings = np.vstack(embeddings_buffer)
+
+        writer.write_chunk(
+            chunk_index=chunk_index,
+            embeddings=chunk_embeddings,
+            metadata_rows=metadata_buffer,
+        )
+
+        state.save(total_processed, chunk_index + 1)
 
     print("[encoding] Embedding job completed successfully")
     print(f"[encoding] Total rows embedded: {total_processed}")

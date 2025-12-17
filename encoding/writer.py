@@ -5,87 +5,55 @@ import numpy as np
 import pandas as pd
 
 
-class EmbeddingWriter:
+class ChunkedEmbeddingWriter:
     """
-    Handles persistent storage of embeddings and metadata.
-    Append-only and resume-safe.
+    Writes embeddings in immutable .npy chunks.
+    Safe to interrupt and resume.
     """
 
     def __init__(
         self,
-        embeddings_path: Path,
-        metadata_path: Path,
+        base_dir: Path,
+        chunk_size: int,
         embedding_dim: int,
         dtype: str = "float32",
     ):
-        self.embeddings_path = embeddings_path
-        self.metadata_path = metadata_path
+        self.base_dir = base_dir
+        self.chunk_size = chunk_size
         self.embedding_dim = embedding_dim
         self.dtype = dtype
 
-        self.embeddings_path.parent.mkdir(parents=True, exist_ok=True)
+        self.chunks_dir = self.base_dir / "chunks"
+        self.chunks_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize files if they don't exist
-        if not self.embeddings_path.exists():
-            self._init_embeddings_file()
+        self.metadata_path = self.base_dir / "metadata.parquet"
 
-        if not self.metadata_path.exists():
-            self._init_metadata_file()
-
-    def _init_embeddings_file(self) -> None:
+    def write_chunk(
+        self,
+        chunk_index: int,
+        embeddings: np.ndarray,
+        metadata_rows: List[Dict[str, Any]],
+    ) -> None:
         """
-        Create an empty memmap file for embeddings.
+        Write one chunk atomically.
         """
-        np.memmap(
-            self.embeddings_path,
-            dtype=self.dtype,
-            mode="w+",
-            shape=(0, self.embedding_dim),
-        )
+        assert embeddings.shape[1] == self.embedding_dim
 
-    def _init_metadata_file(self) -> None:
-        """
-        Create an empty metadata parquet file.
-        """
-        empty_df = pd.DataFrame()
-        empty_df.to_parquet(self.metadata_path)
-
-    def append_embeddings(self, embeddings: np.ndarray) -> None:
         embeddings = embeddings.astype(self.dtype)
-        n_new, dim = embeddings.shape
 
-        assert dim == self.embedding_dim, "Embedding dimension mismatch"
+        chunk_path = self.chunks_dir / f"emb_{chunk_index:05d}.npy"
 
-        dtype_size = np.dtype(self.dtype).itemsize
+        # embeddings
+        tmp_path = chunk_path.with_suffix(".tmp.npy")
+        np.save(tmp_path, embeddings)
+        tmp_path.replace(chunk_path)
 
-        if self.embeddings_path.exists():
-            file_size = self.embeddings_path.stat().st_size
-            current_rows = file_size // (dim * dtype_size)
-        else:
-            current_rows = 0
-
-        new_total_rows = current_rows + n_new
-
-        mmap = np.memmap(
-            self.embeddings_path,
-            dtype=self.dtype,
-            mode="r+" if self.embeddings_path.exists() else "w+",
-            shape=(new_total_rows, dim),
-        )
-
-        mmap[current_rows:new_total_rows] = embeddings
-        mmap.flush()
-
-
-    def append_metadata(self, rows: List[Dict[str, Any]]) -> None:
-        """
-        Append metadata rows to parquet file.
-        """
-        df_new = pd.DataFrame(rows)
+        # metadata
+        df_new = pd.DataFrame(metadata_rows)
 
         if self.metadata_path.exists():
-            df_existing = pd.read_parquet(self.metadata_path)
-            df_all = pd.concat([df_existing, df_new], ignore_index=True)
+            df_old = pd.read_parquet(self.metadata_path)
+            df_all = pd.concat([df_old, df_new], ignore_index=True)
         else:
             df_all = df_new
 
