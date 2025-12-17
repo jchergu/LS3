@@ -34,7 +34,6 @@ def normalize(input_path: str, output_path: str, lyrics_col: str = "lyrics") -> 
         text = unicodedata.normalize('NFD', text)
         text = ''.join(c for c in text if unicodedata.category(c) != 'Mn')
         
-        # Lowercase
         text = text.lower()
         
         # Normalize whitespace (multiple spaces/newlines -> single space)

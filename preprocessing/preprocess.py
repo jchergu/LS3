@@ -23,15 +23,13 @@ language_ft
 language
 """
 
-# Pipeline steps with output paths for tracking
-STEPS = [
-    ("filter_english", "data/processed/lyrics_en.csv"),
-    ("select_columns", "data/processed/lyrics_selected.csv"),
-    ("remove_duplicates", "data/processed/lyrics_no_dup.csv"),
-    ("clean_lyrics", "data/processed/lyrics_clean.csv"),
-    ("normalize", "data/processed/lyrics_normalized.csv"),
-    ("shorten_lyrics", "data/processed/lyrics_final.csv"),
-]
+from preprocessing.config import (
+    STEPS,
+    RAW_DATA_PATH,
+    MAX_LYRICS_LENGTH,
+    COLUMNS
+    )
+steps_dict = dict(STEPS)
 
 
 def _step_done(output_path: str) -> bool:
@@ -44,67 +42,67 @@ def run_preprocessing():
     print()
 
     # Step 1: Filter English
-    if _step_done("data/processed/lyrics_en.csv"):
+    if _step_done(steps_dict["filter_english"]):
         print("[preprocessing/preprocess] ✓ filter_english (SKIPPED — output exists)")
     else:
         print("[preprocessing/preprocess] → filter_english (RUNNING)")
-        df = load_raw_data("data/raw/song_lyrics.csv")
+        df = load_raw_data(RAW_DATA_PATH)
         df = filter_english(df)
         del df
 
     # Step 2: Select columns
-    if _step_done("data/processed/lyrics_selected.csv"):
+    if _step_done(steps_dict["select_columns"]):
         print("[preprocessing/preprocess] ✓ select_columns (SKIPPED — output exists)")
     else:
         print("[preprocessing/preprocess] → select_columns (RUNNING)")
         select_columns(
-            input_path="data/processed/lyrics_en.csv",
-            output_path="data/processed/lyrics_selected.csv",
-            columns=["id", "title", "artist", "lyrics"]
+            input_path=steps_dict["filter_english"],
+            output_path=steps_dict["select_columns"],
+            columns=COLUMNS
         )
 
     # Step 3: Remove duplicates
-    if _step_done("data/processed/lyrics_no_dup.csv"):
+    if _step_done(steps_dict["remove_duplicates"]):
         print("[preprocessing/preprocess] ✓ remove_duplicates (SKIPPED — output exists)")
     else:
         print("[preprocessing/preprocess] → remove_duplicates (RUNNING)")
         remove_duplicates(
-            input_path="data/processed/lyrics_selected.csv",
-            output_path="data/processed/lyrics_no_dup.csv",
+            input_path=steps_dict["select_columns"],
+            output_path=steps_dict["remove_duplicates"],
             subset=["lyrics"]
         )
 
     # Step 4: Clean lyrics
-    if _step_done("data/processed/lyrics_clean.csv"):
+    if _step_done(steps_dict["clean_lyrics"]):
         print("[preprocessing/preprocess] ✓ clean_lyrics (SKIPPED — output exists)")
     else:
         print("[preprocessing/preprocess] → clean_lyrics (RUNNING)")
         clean_lyrics(
-            input_path="data/processed/lyrics_no_dup.csv",
-            output_path="data/processed/lyrics_clean.csv",
+            input_path=steps_dict["remove_duplicates"],
+            output_path=steps_dict["clean_lyrics"],
             lyrics_col="lyrics"
         )
 
     # Step 5: Normalize
-    if _step_done("data/processed/lyrics_normalized.csv"):
+    if _step_done(steps_dict["normalize"]):
         print("[preprocessing/preprocess] ✓ normalize (SKIPPED — output exists)")
     else:
         print("[preprocessing/preprocess] → normalize (RUNNING)")
         normalize(
-            input_path="data/processed/lyrics_clean.csv",
-            output_path="data/processed/lyrics_normalized.csv",
+            input_path=steps_dict["clean_lyrics"],
+            output_path=steps_dict["normalize"],
             lyrics_col="lyrics"
         )
 
     # Step 6: Shorten lyrics
-    if _step_done("data/processed/lyrics_final.csv"):
+    if _step_done(steps_dict["shorten_lyrics"]):
         print("[preprocessing/preprocess] ✓ shorten_lyrics (SKIPPED — output exists)")
     else:
         print("[preprocessing/preprocess] → shorten_lyrics (RUNNING)")
         shorten_lyrics(
-            input_path="data/processed/lyrics_normalized.csv",
-            output_path="data/processed/lyrics_final.csv",
-            max_chars=1500,
+            input_path=steps_dict["normalize"],
+            output_path=steps_dict["shorten_lyrics"],
+            max_chars=MAX_LYRICS_LENGTH,
             lyrics_col="lyrics"
         )
 
