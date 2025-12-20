@@ -5,7 +5,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 # Data paths
 EMBEDDINGS_DIR = PROJECT_ROOT / "data" / "embeddings" / "minilm_1500chars"
-EMBEDDINGS_PATH = EMBEDDINGS_DIR / "lyrics_embeddings.npy"
+CHUNKS_DIR = EMBEDDINGS_DIR / "chunks"
 METADATA_PATH = EMBEDDINGS_DIR / "metadata.parquet"
 
 # Embedding model

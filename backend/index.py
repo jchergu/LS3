@@ -1,30 +1,33 @@
-# backend/index.py
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
 
-from backend.config import EMBEDDINGS_PATH, METADATA_PATH
 
 class VectorIndex:
-    def __init__(self):
-        self.embeddings = np.load(EMBEDDINGS_PATH, allow_pickle=True)
-        self.metadata = pd.read_parquet(METADATA_PATH)
+    def __init__(self, embeddings: np.ndarray, metadata: pd.DataFrame):
+        assert len(embeddings) == len(metadata), \
+            "Embeddings and metadata must have same length"
 
-        # Convert to float32 if needed (good practice)
-        self.embeddings = np.asarray(self.embeddings, dtype=np.float32)
+        self.embeddings = np.asarray(embeddings, dtype=np.float32)
 
-        # Normalize once
-        self.embeddings = self.embeddings / np.linalg.norm(
-            self.embeddings, axis=1, keepdims=True
-        )
+        # normalize embeddings (safe)
+        norms = np.linalg.norm(self.embeddings, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0
+        self.embeddings = self.embeddings / norms
 
-    def search(self, query_vector, top_k):
-        query_vector = query_vector / np.linalg.norm(query_vector)
+        self.metadata = metadata.reset_index(drop=True)
 
-        scores = cosine_similarity(
-            query_vector.reshape(1, -1),
-            self.embeddings
-        )[0]
+    def search(self, query_vector: np.ndarray, top_k: int):
+        query_vector = np.asarray(query_vector, dtype=np.float32).reshape(1, -1)
 
-        top_idx = scores.argsort()[::-1][:top_k]
+        # normalize query (safe)
+        q_norm = np.linalg.norm(query_vector)
+        if q_norm == 0:
+            raise ValueError("Query vector has zero norm")
+
+        query_vector = query_vector / q_norm
+
+        scores = cosine_similarity(query_vector, self.embeddings)[0]
+
+        top_idx = np.argsort(scores)[::-1][:top_k]
         return top_idx, scores[top_idx]

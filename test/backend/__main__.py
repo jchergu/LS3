@@ -1,0 +1,18 @@
+from test.backend.test_loader import main as test_loader
+from test.backend.test_index import main as test_index
+from test.backend.test_service import main as test_service
+from test.backend.test_app import main as test_app
+
+
+def main():
+    print("\n[backend tests]\n")
+
+    test_loader()
+    test_index()
+    test_service()
+
+    print("\n✅ ALL BACKEND TESTS PASSED\n")
+
+
+if __name__ == "__main__":
+    main()
