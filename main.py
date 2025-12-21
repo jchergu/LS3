@@ -13,7 +13,7 @@ def run_encoding():
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python main.py [preprocess | encode | all]")
+        print("Usage: python main.py [preprocess | encode ]")
         sys.exit(1)
 
     command = sys.argv[1]
@@ -22,10 +22,6 @@ if __name__ == "__main__":
         run_preprocessing()
 
     elif command == "encode":
-        run_encoding()
-
-    elif command == "all":
-        run_preprocessing()
         run_encoding()
 
     else:

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lyrics Search</title>
+</head>
+<body>
+
+  <h1>Lyrics Semantic Search</h1>
+
+  <input id="query" placeholder="Type your query" />
+  <button onclick="search()">Search</button>
+
+  <pre id="results"></pre>
+
+  <script>
+    async function search() {
+      const q = document.getElementById("query").value;
+
+      const response = await fetch(
+        `http://backend:8000/search?q=${encodeURIComponent(q)}`
+      );
+
+      const data = await response.json();
+      document.getElementById("results").textContent =
+        JSON.stringify(data, null, 2);
+    }
+  </script>
+
+</body>
+</html>

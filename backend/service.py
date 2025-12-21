@@ -1,6 +1,6 @@
-from backend.embedder import QueryEmbedder
-from backend.index import VectorIndex
-from backend.config import DEFAULT_TOP_K
+from embedder import QueryEmbedder
+from index import VectorIndex
+from config import DEFAULT_TOP_K
 
 
 class SearchService:

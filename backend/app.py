@@ -1,13 +1,18 @@
-from backend.config import (
+from fastapi import FastAPI, Query
+
+from config import (
     CHUNKS_DIR,
     METADATA_PATH,
     EMBEDDING_MODEL_NAME,
 )
 
-from backend.loader import load_embeddings, load_metadata
-from backend.index import VectorIndex
-from backend.embedder import QueryEmbedder
-from backend.service import SearchService
+from loader import load_embeddings, load_metadata
+from index import VectorIndex
+from embedder import QueryEmbedder
+from service import SearchService
+
+from fastapi.middleware.cors import CORSMiddleware
+
 
 
 def create_search_service() -> SearchService:
@@ -18,3 +23,26 @@ def create_search_service() -> SearchService:
     embedder = QueryEmbedder(EMBEDDING_MODEL_NAME)
 
     return SearchService(index, embedder)
+
+
+# FASTAPI APP
+app = FastAPI(title="Lyrics Semantic Search")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Create service ONCE at startup
+search_service = create_search_service()
+
+
+@app.get("/search")
+def search(
+    q: str = Query(..., description="Search query"),
+    top_k: int = 5
+):
+    results = search_service.search(q, top_k)
+    return results.to_dict(orient="records")
