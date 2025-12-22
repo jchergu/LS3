@@ -1,15 +1,15 @@
 from fastapi import FastAPI, Query
 
-from config import (
+from backend.config import (
     CHUNKS_DIR,
     METADATA_PATH,
     EMBEDDING_MODEL_NAME,
 )
 
-from loader import load_embeddings, load_metadata
-from index import VectorIndex
-from embedder import QueryEmbedder
-from service import SearchService
+from backend.loader import load_embeddings, load_metadata
+from backend.index import VectorIndex
+from backend.embedder import QueryEmbedder
+from backend.service import SearchService
 
 from fastapi.middleware.cors import CORSMiddleware
 
