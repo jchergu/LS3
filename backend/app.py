@@ -39,6 +39,11 @@ app.add_middleware(
 search_service = create_search_service()
 
 
+@app.get("/")
+def root():
+    return {"hello": "world"}
+
+
 @app.get("/search")
 def search(
     q: str = Query(..., description="Search query"),

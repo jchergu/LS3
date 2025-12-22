@@ -17,12 +17,18 @@
       const q = document.getElementById("query").value;
 
       const response = await fetch(
-        `http://backend:8000/search?q=${encodeURIComponent(q)}`
+        `http://localhost:8000/search?q=${encodeURIComponent(q)}`
       );
 
       const data = await response.json();
-      document.getElementById("results").textContent =
-        JSON.stringify(data, null, 2);
+      
+      // Format results as "artist" - "title" ("score" %)
+      const formattedResults = data.map(item => {
+        const score = (item.score * 100).toFixed(1);
+        return `${item.artist} - ${item.title} (${score}%)`;
+      }).join('\n');
+      
+      document.getElementById("results").textContent = formattedResults;
     }
   </script>
 
