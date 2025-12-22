@@ -9,7 +9,6 @@ TESTS = [
 
 
 def run(test_module: str):
-    print(f"\n▶ Running {test_module}")
     result = subprocess.run(
         [sys.executable, "-m", test_module],
         check=False,
@@ -20,10 +19,10 @@ def run(test_module: str):
 
 
 def main():
-    print("Running encoding test suite")
+    print("[encoding tests]\n")
     for t in TESTS:
         run(t)
-    print("\n✅ ALL encoding tests PASSED")
+    print("\n✅ all encoding tests passed.\n")
 
 
 if __name__ == "__main__":

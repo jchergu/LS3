@@ -10,7 +10,7 @@ def main():
     test_index()
     test_service()
 
-    print("\n✅ ALL BACKEND TESTS PASSED\n")
+    print("\n✅ all backend tests passed.\n")
 
 
 if __name__ == "__main__":

@@ -10,9 +10,8 @@ def load_metadata(metadata_path: Path) -> pd.DataFrame:
     return pd.read_parquet(metadata_path)
 
 def load_embeddings(chunks_dir: Path) -> np.ndarray:
-    print("CHUNKS_DIR =", chunks_dir)
-
-    files = list(chunks_dir.iterdir()) if chunks_dir.exists() else []
+    if not chunks_dir.exists() or not chunks_dir.is_dir():
+        raise RuntimeError(f"Embeddings chunks directory not found: {chunks_dir}")
     chunks = sorted(chunks_dir.glob("emb_*.npy"))
 
     if not chunks:
