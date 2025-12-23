@@ -1,5 +1,7 @@
 # Comparisons for vector index
-This folder contains code to compare different implementations of the vector index.
+This folder contains code to compare different implementations of the vector index:
+- NumPy (brute-force)
+- FAISS
 
 You can add/edit queries in the `comparison/queries.txt` file.
 
