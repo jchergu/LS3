@@ -1,29 +1,37 @@
-import sys
+from backend.loader import load_embeddings, load_metadata
+from backend.index import VectorIndex
+from backend.embedder import QueryEmbedder
+from backend.config import CHUNKS_DIR, METADATA_PATH, EMBEDDING_MODEL_NAME, DEFAULT_TOP_K
 
 
-def run_preprocessing():
-    from preprocessing.preprocess import run_preprocessing
-    run_preprocessing()
+def main():
+    print("Loading data...")
+    embeddings = load_embeddings(CHUNKS_DIR)
+    metadata = load_metadata(METADATA_PATH)
 
+    print("Building FAISS index...")
+    index = VectorIndex(embeddings, metadata, use_faiss=True)
+    embedder = QueryEmbedder(EMBEDDING_MODEL_NAME)
 
-def run_encoding():
-    from encoding.run_embedding import main
-    main()
+    print("\nSemantic search ready.")
+    print("Type a query (or 'exit' to quit)\n")
+
+    while True:
+        query = input("> ").strip()
+        if query.lower() in {"exit", "quit", "q"}:
+            print("Bye")
+            break
+
+        q_emb = embedder.embed(query)
+        ids, scores = index.search(q_emb, top_k=DEFAULT_TOP_K)
+
+        results = metadata.iloc[ids].assign(score=scores)
+
+        print("\nResults:")
+        for i, row in results.iterrows():
+            print(f"- {row['artist'] if 'artist' in row else 'N/A'} | {row['title'] if 'title' in row else 'N/A'} | score={row['score']:.4f}")
+        print()
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python main.py [preprocess | encode ]")
-        sys.exit(1)
-
-    command = sys.argv[1]
-
-    if command == "preprocess":
-        run_preprocessing()
-
-    elif command == "encode":
-        run_encoding()
-
-    else:
-        print(f"Unknown command: {command}")
-        sys.exit(1)
+    main()
