@@ -21,3 +21,13 @@ As we will see, the FAISS implementation is significantly faster than the NumPy 
 
 ### Latency comparison
 [![](plots/latency_comparison.png)](plots/latency_comparison.png)
+
+          numpy_ms    faiss_ms
+count     4.000000    4.000000
+mean   2476.312415  220.433960
+std     182.932186   37.074608
+min    2248.863640  169.068600
+25%    2394.425020  205.367430
+50%    2483.702230  232.316020
+75%    2565.589625  247.382550
+max    2688.981560  248.035200
