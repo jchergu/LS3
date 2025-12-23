@@ -1,33 +1,38 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
+import faiss
 
 
 class VectorIndex:
-    def __init__(self, embeddings: np.ndarray, metadata: pd.DataFrame):
+    def __init__(self, embeddings: np.ndarray, metadata: pd.DataFrame, use_faiss: bool = True):
         assert len(embeddings) == len(metadata), \
             "Embeddings and metadata must have same length"
 
+        self.metadata = metadata.reset_index(drop=True)
+        self.use_faiss = use_faiss
+
         self.embeddings = np.asarray(embeddings, dtype=np.float32)
 
-        # normalize embeddings (safe)
-        norms = np.linalg.norm(self.embeddings, axis=1, keepdims=True)
-        norms[norms == 0] = 1.0
-        self.embeddings = self.embeddings / norms
+        faiss.normalize_L2(self.embeddings)
 
-        self.metadata = metadata.reset_index(drop=True)
+        if self.use_faiss:
+            dim = self.embeddings.shape[1]
+            self.index = faiss.IndexFlatIP(dim)
+            self.index.add(self.embeddings)
 
     def search(self, query_vector: np.ndarray, top_k: int):
         query_vector = np.asarray(query_vector, dtype=np.float32).reshape(1, -1)
 
-        # normalize query (safe)
-        q_norm = np.linalg.norm(query_vector)
-        if q_norm == 0:
-            raise ValueError("Query vector has zero norm")
+        faiss.normalize_L2(query_vector)
 
-        query_vector = query_vector / q_norm
+        if self.use_faiss:
+            assert query_vector.shape[1] == self.embeddings.shape[1], \
+            "Query embedding dimension mismatch"
 
-        scores = cosine_similarity(query_vector, self.embeddings)[0]
-
-        top_idx = np.argsort(scores)[::-1][:top_k]
-        return top_idx, scores[top_idx]
+            scores, indices = self.index.search(query_vector, top_k)
+            return indices[0], scores[0]       
+        else:
+            from sklearn.metrics.pairwise import cosine_similarity
+            scores = cosine_similarity(query_vector, self.embeddings)[0]
+            top_idx = np.argsort(scores)[::-1][:top_k]
+            return top_idx, scores[top_idx]
