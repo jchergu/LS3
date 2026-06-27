@@ -17,7 +17,7 @@
       const q = document.getElementById("query").value;
 
       const response = await fetch(
-        `http://localhost:8000/search?q=${encodeURIComponent(q)}`
+        `/search?q=${encodeURIComponent(q)}`
       );
 
       const data = await response.json();
