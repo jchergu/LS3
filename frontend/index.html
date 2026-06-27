@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lyrics Search</title>
+</head>
+<body>
+
+  <h1>Lyrics Semantic Search</h1>
+
+  <input id="query" placeholder="Type your query" />
+  <button onclick="search()">Search</button>
+
+  <pre id="results"></pre>
+
+  <script>
+    async function search() {
+      const q = document.getElementById("query").value;
+
+      const response = await fetch(
+        `http://localhost:8000/search?q=${encodeURIComponent(q)}`
+      );
+
+      const data = await response.json();
+      
+      // Format results as "artist" - "title" ("score" %)
+      const formattedResults = data.map(item => {
+        const score = (item.score * 100).toFixed(1);
+        return `${item.artist} - ${item.title} (${score}%)`;
+      }).join('\n');
+      
+      document.getElementById("results").textContent = formattedResults;
+    }
+  </script>
+
+</body>
+</html>
