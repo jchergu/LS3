@@ -14,7 +14,7 @@ COPY backend/ ./backend/
 COPY encoding/__init__.py ./encoding/__init__.py
 COPY encoding/config.py ./encoding/config.py
 COPY frontend/ ./frontend/
-# COPY data/embeddings/ ./data/embeddings/
+COPY data/embeddings/ ./data/embeddings/
 
 ENV EMBEDDINGS_DIR=/app/data/embeddings/minilm_1500chars
 ENV DEFAULT_TOP_K=5
