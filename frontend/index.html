@@ -1,36 +1,115 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Lyrics Search</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LS3 — Lyrics Search</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a1a; font-family: system-ui, sans-serif; }
+    .wrap { min-height: 100vh; padding: 2rem 1rem; }
+    .logo { font-size: 13px; font-weight: 500; color: #fdb101; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3rem; }
+    .hero { text-align: center; margin-bottom: 2.5rem; }
+    .hero h1 { font-size: 42px; font-weight: 700; color: #fdb101; line-height: 1.1; margin-bottom: 0.75rem; }
+    .hero p { font-size: 16px; color: #888; }
+    .search-box { display: flex; gap: 10px; max-width: 600px; margin: 0 auto 2.5rem; }
+    .search-box input {
+      flex: 1; background: #2a2a2a; border: 1.5px solid #333; border-radius: 16px;
+      color: #f5f5dc; font-size: 15px; padding: 14px 20px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box input::placeholder { color: #555; }
+    .search-box input:focus { border-color: #fdb101; }
+    .search-box button {
+      background: #fdb101; color: #1a1a1a; border: none; border-radius: 16px;
+      font-size: 15px; font-weight: 600; padding: 14px 24px; cursor: pointer;
+      transition: background 0.2s, transform 0.1s; white-space: nowrap;
+    }
+    .search-box button:hover { background: #eb8317; }
+    .search-box button:active { transform: scale(0.97); }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 2.5rem; }
+    .tag {
+      background: #2a2a2a; border: 1px solid #333; border-radius: 999px;
+      color: #888; font-size: 13px; padding: 6px 14px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tag:hover { border-color: #fdb101; color: #fdb101; }
+    .results { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+    .result-card {
+      background: #222; border: 1px solid #2e2e2e; border-radius: 16px;
+      padding: 16px 20px; display: flex; align-items: center; gap: 16px;
+      transition: border-color 0.15s;
+    }
+    .result-card:hover { border-color: #444; }
+    .rank { font-size: 13px; color: #555; font-weight: 500; min-width: 20px; }
+    .song-info { flex: 1; }
+    .song-title { font-size: 15px; font-weight: 600; color: #f5f5dc; margin-bottom: 3px; }
+    .song-artist { font-size: 13px; color: #888; }
+    .score-pill {
+      background: #2a2a2a; border: 1px solid #333; border-radius: 999px;
+      font-size: 12px; color: #fdb101; padding: 4px 10px; font-weight: 500;
+    }
+    .empty { text-align: center; color: #555; font-size: 14px; padding: 3rem 0; }
+    .loading { text-align: center; color: #fdb101; font-size: 14px; padding: 3rem 0; }
+    .error { text-align: center; color: #FF6666; font-size: 14px; padding: 3rem 0; }
+  </style>
 </head>
 <body>
-
-  <h1>Lyrics Semantic Search</h1>
-
-  <input id="query" placeholder="Type your query" />
-  <button onclick="search()">Search</button>
-
-  <pre id="results"></pre>
-
+  <div class="wrap">
+    <div class="logo">LS3</div>
+    <div class="hero">
+      <h1>Search by feeling,<br>not by keyword.</h1>
+      <p>Semantic lyrics search powered by AI embeddings</p>
+    </div>
+    <div class="search-box">
+      <input id="q" placeholder="e.g. heartbreak at 3am, summer nostalgia..." onkeydown="if(event.key==='Enter') doSearch()" />
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <div class="tags">
+      <span class="tag" onclick="quickSearch('heartbreak at 3am')">heartbreak at 3am</span>
+      <span class="tag" onclick="quickSearch('summer nostalgia')">summer nostalgia</span>
+      <span class="tag" onclick="quickSearch('hype workout anthem')">hype workout anthem</span>
+      <span class="tag" onclick="quickSearch('late night driving')">late night driving</span>
+      <span class="tag" onclick="quickSearch('happy love songs')">happy love songs</span>
+    </div>
+    <div class="results" id="results">
+      <div class="empty">Type a vibe, get songs ✦</div>
+    </div>
+  </div>
   <script>
-    async function search() {
-      const q = document.getElementById("query").value;
+    function render(results) {
+      const el = document.getElementById('results');
+      if (!results.length) { el.innerHTML = '<div class="empty">No results found</div>'; return; }
+      el.innerHTML = results.map((r, i) => `
+        <div class="result-card">
+          <span class="rank">${i + 1}</span>
+          <div class="song-info">
+            <div class="song-title">${r.title}</div>
+            <div class="song-artist">${r.artist}</div>
+          </div>
+          <span class="score-pill">${(r.score * 100).toFixed(0)}% match</span>
+        </div>
+      `).join('');
+    }
 
-      const response = await fetch(
-        `/search?q=${encodeURIComponent(q)}`
-      );
+    async function doSearch() {
+      const q = document.getElementById('q').value.trim();
+      if (!q) return;
+      const el = document.getElementById('results');
+      el.innerHTML = '<div class="loading">Searching...</div>';
+      try {
+        const res = await fetch(`/search?q=${encodeURIComponent(q)}&top_k=5`);
+        const data = await res.json();
+        render(data);
+      } catch (e) {
+        el.innerHTML = '<div class="error">Something went wrong. Try again.</div>';
+      }
+    }
 
-      const data = await response.json();
-      
-      // Format results as "artist" - "title" ("score" %)
-      const formattedResults = data.map(item => {
-        const score = (item.score * 100).toFixed(1);
-        return `${item.artist} - ${item.title} (${score}%)`;
-      }).join('\n');
-      
-      document.getElementById("results").textContent = formattedResults;
+    function quickSearch(q) {
+      document.getElementById('q').value = q;
+      doSearch();
     }
   </script>
-
 </body>
 </html>
