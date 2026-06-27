@@ -15,3 +15,5 @@ RAW_DATA_PATH = "data/raw/song_lyrics.csv"
 MAX_LYRICS_LENGTH = 1500  # characters
 
 COLUMNS = ["id", "title", "artist", "lyrics"]
+
+TOP_N_SONGS = 40_000
